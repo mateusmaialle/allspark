@@ -254,7 +254,7 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
    CONTAINER DA TABELA
    ============================================================ */
 #offers-container {
-  padding-bottom: 48px;
+  padding: 0 20px 48px;
 }
 
 .table-wrap {
@@ -262,7 +262,7 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius);
   background: var(--white);
-  -webkit-overflow-scrolling: touch; /* scroll suave no iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ============================================================

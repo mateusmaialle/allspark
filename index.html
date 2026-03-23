@@ -75,9 +75,10 @@
       </div>
     </header>
 
-    <main class="container">
+    <main>
 
-      <!-- Barra de Filtros -->
+      <!-- Filtros e contador alinhados ao container -->
+      <div class="container">
       <section class="filters" aria-label="Filtros">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">
@@ -112,8 +113,9 @@
 
       <!-- Contador de resultados -->
       <p id="results-count" class="results-count hidden" aria-live="polite"></p>
+      </div><!-- /.container -->
 
-      <!-- Área de cards — skeletons e ofertas renderizados aqui via JS -->
+      <!-- Tabela: largura total da janela, com padding lateral -->
       <section id="offers-container" aria-label="Lista de ofertas"></section>
 
     </main>
