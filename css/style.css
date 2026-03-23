@@ -1,60 +1,44 @@
 /* ============================================================
    VARIÁVEIS E RESET
    ============================================================ */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Paleta principal */
-  --white:          #FFFFFF;
-  --black:          #111111;
-  --purple:         #7C3AED;
-  --purple-hover:   #6D28D9;
-  --purple-light:   #EDE9FE;
-  --purple-text:    #5B21B6;
-
-  /* Tons de cinza */
-  --gray-50:        #F9FAFB;
-  --gray-100:       #F3F4F6;
-  --gray-200:       #E5E7EB;
-  --gray-400:       #9CA3AF;
-  --gray-500:       #6B7280;
-  --gray-600:       #4B5563;
-
-  /* Outros */
-  --green:          #059669;
-  --green-light:    #D1FAE5;
-  --amber:          #D97706;
-  --amber-light:    #FEF3C7;
-  --red:            #DC2626;
-
-  /* Layout */
-  --radius:         12px;
-  --radius-sm:      8px;
-  --radius-xs:      5px;
-  --shadow-sm:      0 1px 2px rgba(0,0,0,0.06);
-  --shadow:         0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md:      0 4px 12px rgba(0,0,0,0.08);
-  --transition:     0.2s ease;
+  --white:        #FFFFFF;
+  --black:        #111111;
+  --purple:       #7C3AED;
+  --purple-hover: #6D28D9;
+  --purple-light: #EDE9FE;
+  --purple-text:  #5B21B6;
+  --gray-50:      #F9FAFB;
+  --gray-100:     #F3F4F6;
+  --gray-200:     #E5E7EB;
+  --gray-400:     #9CA3AF;
+  --gray-500:     #6B7280;
+  --gray-600:     #4B5563;
+  --red:          #DC2626;
+  --radius:       12px;
+  --radius-sm:    8px;
+  --radius-xs:    5px;
+  --shadow-sm:    0 1px 2px rgba(0,0,0,0.06);
+  --shadow:       0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:    0 4px 12px rgba(0,0,0,0.08);
+  --t:            0.18s ease;
 }
 
 html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--gray-50);
+  background: var(--gray-50);
   color: var(--black);
   line-height: 1.5;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Utilitários */
 .hidden { display: none !important; }
-.container { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
 
 
 /* ============================================================
@@ -79,7 +63,6 @@ body {
   text-align: center;
 }
 
-/* Ícone centralizado */
 .password-logo {
   width: 60px;
   height: 60px;
@@ -91,30 +74,12 @@ body {
   margin: 0 auto 24px;
 }
 
-.password-logo svg {
-  width: 30px;
-  height: 30px;
-  color: var(--purple);
-}
+.password-logo svg { width: 30px; height: 30px; color: var(--purple); }
 
-.password-box h1 {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  margin-bottom: 6px;
-}
+.password-box h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 6px; }
+.password-box .subtitle { font-size: 14px; color: var(--gray-500); margin-bottom: 28px; }
 
-.password-box .subtitle {
-  font-size: 14px;
-  color: var(--gray-500);
-  margin-bottom: 28px;
-}
-
-#password-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+#password-form { display: flex; flex-direction: column; gap: 10px; }
 
 #password-input {
   width: 100%;
@@ -123,15 +88,13 @@ body {
   border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: 15px;
-  color: var(--black);
-  background: var(--white);
   outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--t), box-shadow var(--t);
 }
 
 #password-input:focus {
   border-color: var(--purple);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
 }
 
 #password-submit {
@@ -144,28 +107,13 @@ body {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition), transform var(--transition);
+  transition: background var(--t);
 }
 
-#password-submit:hover:not(:disabled) {
-  background: var(--purple-hover);
-}
+#password-submit:hover:not(:disabled) { background: var(--purple-hover); }
+#password-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-#password-submit:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-#password-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error-msg {
-  font-size: 13px;
-  color: var(--red);
-  text-align: center;
-  padding: 4px 0;
-}
+.error-msg { font-size: 13px; color: var(--red); text-align: center; padding: 4px 0; }
 
 
 /* ============================================================
@@ -174,7 +122,7 @@ body {
 header {
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
-  padding: 20px 0;
+  padding: 18px 0;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -188,18 +136,8 @@ header {
   gap: 16px;
 }
 
-header h1 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  color: var(--black);
-}
-
-header .subtitle {
-  font-size: 13px;
-  color: var(--gray-500);
-  margin-top: 2px;
-}
+header h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
 
 #logout-btn {
   padding: 7px 14px;
@@ -211,15 +149,11 @@ header .subtitle {
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--transition);
-  white-space: nowrap;
+  transition: all var(--t);
   flex-shrink: 0;
 }
 
-#logout-btn:hover {
-  border-color: var(--red);
-  color: var(--red);
-}
+#logout-btn:hover { border-color: var(--red); color: var(--red); }
 
 
 /* ============================================================
@@ -233,12 +167,7 @@ header .subtitle {
   margin: 28px 0 16px;
 }
 
-/* Input de busca com ícone */
-.search-wrap {
-  flex: 1;
-  min-width: 220px;
-  position: relative;
-}
+.search-wrap { flex: 1; min-width: 220px; position: relative; }
 
 .search-icon {
   position: absolute;
@@ -250,10 +179,7 @@ header .subtitle {
   pointer-events: none;
 }
 
-.search-icon svg {
-  width: 16px;
-  height: 16px;
-}
+.search-icon svg { width: 16px; height: 16px; }
 
 #search-input {
   width: 100%;
@@ -264,12 +190,10 @@ header .subtitle {
   font-size: 14px;
   background: var(--white);
   outline: none;
-  transition: border-color var(--transition);
+  transition: border-color var(--t);
 }
 
-#search-input:focus {
-  border-color: var(--purple);
-}
+#search-input:focus { border-color: var(--purple); }
 
 .filters select {
   padding: 10px 14px;
@@ -281,13 +205,11 @@ header .subtitle {
   color: var(--black);
   outline: none;
   cursor: pointer;
-  transition: border-color var(--transition);
   min-width: 170px;
+  transition: border-color var(--t);
 }
 
-.filters select:focus {
-  border-color: var(--purple);
-}
+.filters select:focus { border-color: var(--purple); }
 
 #clear-filters {
   padding: 10px 16px;
@@ -300,177 +222,133 @@ header .subtitle {
   color: var(--gray-600);
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--transition);
+  transition: all var(--t);
 }
 
-#clear-filters:hover {
-  border-color: var(--purple);
-  color: var(--purple);
+#clear-filters:hover { border-color: var(--purple); color: var(--purple); }
+
+.results-count { font-size: 13px; color: var(--gray-500); margin-bottom: 4px; }
+
+
+/* ============================================================
+   GRID DE CARDS
+   ============================================================ */
+#offers-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  padding-bottom: 48px;
 }
 
-.results-count {
-  font-size: 13px;
-  color: var(--gray-500);
-  margin-bottom: 4px;
+/* Quando estiver mostrando estado vazio ou erro, ocupa largura total */
+#offers-container:has(.empty-state),
+#offers-container:has(.error-state) {
+  grid-template-columns: 1fr;
 }
 
 
 /* ============================================================
-   CARD VSL (Accordion)
+   CARD DE OFERTA
    ============================================================ */
-.vsl-card {
+.offer-card {
   background: var(--white);
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius);
-  margin-bottom: 10px;
-  overflow: hidden;
-  transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.vsl-card:hover {
-  border-color: #C4B5FD;
-  box-shadow: var(--shadow);
-}
-
-.vsl-card.open {
-  border-color: var(--purple);
-  box-shadow: var(--shadow-md);
-}
-
-/* Cabeçalho clicável do accordion */
-.vsl-header {
+  padding: 20px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 22px;
-  cursor: pointer;
-  user-select: none;
+  flex-direction: column;
   gap: 16px;
-  transition: background var(--transition);
+  transition: border-color var(--t), box-shadow var(--t), transform var(--t);
 }
 
-.vsl-header:hover {
-  background: var(--gray-50);
+.offer-card:hover {
+  border-color: #C4B5FD;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
-.vsl-card.open .vsl-header {
-  background: var(--gray-50);
-}
-
-.vsl-header:focus-visible {
-  outline: 2px solid var(--purple);
-  outline-offset: -2px;
-  border-radius: var(--radius-xs);
-}
-
-.vsl-header-left {
+/* Cabeçalho do card */
+.offer-card-header {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.offer-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
   min-width: 0;
 }
 
-.vsl-title-group {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.vsl-title-group .offer-name {
+.offer-name {
   font-size: 15px;
   font-weight: 600;
   color: var(--black);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
-.vsl-header-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+/* Tag de fonte de tráfego (ex: "Meta", "Google") */
+.fonte-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
-/* Stats compactas no header */
-.header-stats {
-  display: flex;
-  gap: 20px;
+/* Métricas: Valor Gasto e CPA */
+.offer-card-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  padding: 14px;
 }
 
-.h-stat {
+.metric {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  gap: 3px;
 }
 
-.h-stat-label {
+.metric-label {
   font-size: 10px;
   color: var(--gray-400);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 500;
-}
-
-.h-stat-value {
-  font-size: 14px;
+  letter-spacing: 0.07em;
   font-weight: 600;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
   color: var(--black);
+  letter-spacing: -0.4px;
 }
 
-.children-count {
-  font-size: 12px;
-  color: var(--gray-400);
-  white-space: nowrap;
-}
-
-/* Seta do accordion */
-.accordion-arrow {
-  width: 20px;
-  height: 20px;
-  color: var(--gray-400);
-  transition: transform 0.3s ease;
-  flex-shrink: 0;
-}
-
-.vsl-card.open .accordion-arrow {
-  transform: rotate(180deg);
+/* CPA em destaque roxo */
+.metric-value.highlight {
   color: var(--purple);
 }
 
-
-/* ============================================================
-   DETALHES DA OFERTA (VSL e filhos)
-   ============================================================ */
-.vsl-body {
+/* Rodapé do card: referência VSL */
+.offer-card-footer {
   border-top: 1px solid var(--gray-100);
+  padding-top: 14px;
 }
 
-/* Seção de detalhes da própria VSL */
-.vsl-own-details {
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--gray-100);
-  background: var(--white);
-}
-
-.card-details {
+.vsl-ref {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px 16px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .detail-label {
@@ -481,117 +359,18 @@ header .subtitle {
   font-weight: 600;
 }
 
-.detail-value {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--black);
-}
-
-/* Botão de acesso à pasta */
-.btn-pasta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  background: var(--purple);
-  color: white;
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  transition: background var(--transition), transform var(--transition);
-  width: fit-content;
-}
-
-.btn-pasta:hover {
-  background: var(--purple-hover);
-  transform: translateY(-1px);
-}
-
-.btn-pasta:active {
-  transform: translateY(0);
-}
-
-.btn-pasta svg {
-  width: 14px;
-  height: 14px;
+.vsl-ref-value {
+  font-size: 12px;
+  color: var(--gray-600);
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  word-break: break-all;
+  line-height: 1.4;
 }
 
 
 /* ============================================================
-   SUB-CARDS (Microleads, Leads e Ads — filhos da VSL)
+   BADGE DE NICHO
    ============================================================ */
-.vsl-children {
-  padding: 16px 22px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--gray-50);
-}
-
-.children-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  font-weight: 600;
-  color: var(--gray-400);
-  padding-bottom: 4px;
-}
-
-.sub-card {
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  transition: border-color var(--transition);
-}
-
-.sub-card:hover {
-  border-color: #C4B5FD;
-}
-
-.sub-card-header {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.sub-card-header .offer-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--black);
-}
-
-.no-children {
-  font-size: 13px;
-  color: var(--gray-400);
-  text-align: center;
-  padding: 12px 0;
-  font-style: italic;
-}
-
-
-/* ============================================================
-   BADGES
-   ============================================================ */
-.nivel-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  flex-shrink: 0;
-}
-
-/* Cores por nível */
-.nivel-vsl             { background: var(--purple);       color: #fff; }
-.nivel-microlead-lead  { background: var(--green);        color: #fff; }
-.nivel-ads             { background: var(--amber);        color: #fff; }
-
-/* Badge de nicho */
 .nicho-badge {
   display: inline-block;
   font-size: 11px;
@@ -601,11 +380,12 @@ header .subtitle {
   background: var(--purple-light);
   color: var(--purple-text);
   white-space: nowrap;
+  width: fit-content;
 }
 
 
 /* ============================================================
-   SKELETON LOADER (estado de carregamento)
+   SKELETON LOADER
    ============================================================ */
 @keyframes shimmer {
   0%   { background-position: -800px 0; }
@@ -613,12 +393,7 @@ header .subtitle {
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--gray-100) 25%,
-    var(--gray-200) 50%,
-    var(--gray-100) 75%
-  );
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%);
   background-size: 1600px 100%;
   animation: shimmer 1.4s infinite linear;
   border-radius: 4px;
@@ -628,48 +403,37 @@ header .subtitle {
   background: var(--white);
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius);
-  padding: 20px 22px;
-  margin-bottom: 10px;
+  padding: 20px;
 }
 
-.skeleton-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-}
+.skeleton-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-.sk-badge  { width: 44px; height: 22px; border-radius: 4px; flex-shrink: 0; }
-.sk-title  { width: 200px; max-width: 60%; height: 18px; }
+.sk-badge  { width: 56px;  height: 22px; border-radius: 20px; flex-shrink: 0; }
+.sk-title  { width: 160px; height: 18px; max-width: 70%; }
 .sk-text   { height: 13px; width: 100%; margin-top: 8px; }
 .sk-short  { width: 55%; }
-.sk-xshort { width: 30%; }
 
 
 /* ============================================================
    ESTADOS VAZIOS E DE ERRO
    ============================================================ */
-.empty-state,
-.error-state {
+.empty-state, .error-state {
   text-align: center;
   padding: 64px 20px;
   color: var(--gray-500);
+  grid-column: 1 / -1;
 }
 
-.empty-state p,
-.error-state p {
+.empty-state p, .error-state p {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 6px;
   color: var(--gray-600);
 }
 
-.empty-state span,
-.error-state span {
-  font-size: 14px;
-}
+.empty-state span, .error-state span { font-size: 14px; }
 
-.error-state .btn-retry {
+.btn-retry {
   margin-top: 18px;
   padding: 10px 22px;
   background: var(--purple);
@@ -680,19 +444,17 @@ header .subtitle {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--t);
 }
 
-.error-state .btn-retry:hover {
-  background: var(--purple-hover);
-}
+.btn-retry:hover { background: var(--purple-hover); }
 
 
 /* ============================================================
    FOOTER
    ============================================================ */
 footer {
-  margin-top: 48px;
+  margin-top: 12px;
   padding: 24px 0 32px;
   border-top: 1px solid var(--gray-200);
   text-align: center;
@@ -702,71 +464,16 @@ footer {
 
 
 /* ============================================================
-   RESPONSIVO — Mobile (<= 640px)
+   RESPONSIVO
    ============================================================ */
 @media (max-width: 640px) {
-  /* Tela de senha */
-  .password-box {
-    padding: 32px 22px 28px;
-  }
+  .password-box { padding: 32px 22px 28px; }
 
-  /* Header */
-  .header-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
+  .header-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  #logout-btn { align-self: flex-end; }
 
-  #logout-btn {
-    align-self: flex-end;
-  }
+  .filters { flex-direction: column; gap: 8px; }
+  .search-wrap, .filters select, #clear-filters { width: 100%; min-width: unset; }
 
-  /* Filtros empilhados */
-  .filters {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .search-wrap,
-  .filters select,
-  #clear-filters {
-    width: 100%;
-    min-width: unset;
-  }
-
-  /* VSL header empilhado */
-  .vsl-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px 18px;
-  }
-
-  .vsl-header-left {
-    width: 100%;
-  }
-
-  .vsl-header-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .header-stats {
-    gap: 16px;
-  }
-
-  .h-stat {
-    align-items: flex-start;
-  }
-
-  /* Detalhes em 2 colunas no mobile */
-  .details-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .vsl-own-details,
-  .vsl-children {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
+  #offers-container { grid-template-columns: 1fr; }
 }
