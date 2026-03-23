@@ -236,7 +236,7 @@ function aplicarFiltros() {
 
 
 /* ============================================================
-   RENDERIZAÇÃO
+   RENDERIZAÇÃO — Tabela
    ============================================================ */
 
 function renderizarOfertas(lista) {
@@ -252,45 +252,34 @@ function renderizarOfertas(lista) {
     return;
   }
 
-  const frag = document.createDocumentFragment();
-  lista.forEach(oferta => frag.appendChild(criarCard(oferta)));
-  container.appendChild(frag);
-}
+  const tabela = document.createElement('div');
+  tabela.className = 'table-wrap';
+  tabela.innerHTML = `
+    <table class="offers-table">
+      <thead>
+        <tr>
+          <th>Oferta</th>
+          <th>Nicho</th>
+          <th class="num">Valor Gasto (7d)</th>
+          <th class="num">CPA</th>
+          <th>Fonte</th>
+          <th>Referência VSL</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(o => `
+          <tr>
+            <td class="td-nome">${esc(o.nome)}</td>
+            <td>${o.nicho ? `<span class="nicho-badge">${esc(o.nicho)}</span>` : '—'}</td>
+            <td class="num td-valor">${fmtValor(o.valorGasto)}</td>
+            <td class="num td-cpa">${fmtValor(o.cpa)}</td>
+            <td>${o.fonte ? `<span class="fonte-tag">${esc(o.fonte)}</span>` : '—'}</td>
+            <td class="td-vsl" title="${esc(o.linkVsl)}">${esc(o.linkVsl) || '—'}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
 
-function criarCard(oferta) {
-  const card = document.createElement('div');
-  card.className = 'offer-card';
-
-  card.innerHTML = `
-    <div class="offer-card-header">
-      <div class="offer-card-title">
-        <h2 class="offer-name">${esc(oferta.nome)}</h2>
-        ${oferta.nicho ? `<span class="nicho-badge">${esc(oferta.nicho)}</span>` : ''}
-      </div>
-      ${oferta.fonte ? `<span class="fonte-tag">${esc(oferta.fonte)}</span>` : ''}
-    </div>
-
-    <div class="offer-card-metrics">
-      <div class="metric">
-        <span class="metric-label">Valor Gasto (7d)</span>
-        <span class="metric-value">${fmtValor(oferta.valorGasto)}</span>
-      </div>
-      <div class="metric">
-        <span class="metric-label">CPA</span>
-        <span class="metric-value highlight">${fmtValor(oferta.cpa)}</span>
-      </div>
-    </div>
-
-    ${oferta.linkVsl ? `
-      <div class="offer-card-footer">
-        <div class="vsl-ref">
-          <span class="detail-label">Referência VSL</span>
-          <span class="vsl-ref-value" title="${esc(oferta.linkVsl)}">${esc(oferta.linkVsl)}</span>
-        </div>
-      </div>` : ''}
-  `;
-
-  return card;
+  container.appendChild(tabela);
 }
 
 
