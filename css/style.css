@@ -269,8 +269,6 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
    TABELA DE OFERTAS
    ============================================================ */
 .offers-table {
-  width: max-content;  /* expande conforme o conteúdo */
-  min-width: 100%;     /* mas nunca menor que o container */
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -308,8 +306,6 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
   padding: 14px 16px;
   color: var(--black);
   vertical-align: middle;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
