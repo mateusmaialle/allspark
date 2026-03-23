@@ -310,9 +310,6 @@ function renderizarOfertas(lista) {
   });
 
   container.appendChild(wrap);
-
-  // Resize: aguarda o browser pintar antes de capturar as larguras
-  requestAnimationFrame(() => configurarRedimensionamento(wrap));
 }
 
 /** Retorna as classes CSS adequadas para cada célula */
@@ -372,55 +369,6 @@ function htmlLinkVsl(valor) {
   return `<span class="td-vsl-text" title="${esc(valor)}">${esc(valor)}</span>`;
 }
 
-
-/* ============================================================
-   REDIMENSIONAMENTO DE COLUNAS (drag na borda do cabeçalho)
-   ============================================================ */
-function configurarRedimensionamento(wrap) {
-  const table = wrap.querySelector('table');
-  const ths   = Array.from(wrap.querySelectorAll('th'));
-
-  // 1. Pina as larguras atuais (já renderizadas pelo browser)
-  ths.forEach(th => {
-    th.style.width    = th.getBoundingClientRect().width + 'px';
-    th.style.minWidth = '48px';
-  });
-
-  // 2. Muda para layout fixo — agora os th.style.width são respeitados
-  table.style.tableLayout = 'fixed';
-  table.style.width       = table.getBoundingClientRect().width + 'px';
-
-  // 3. Adiciona handle em cada cabeçalho
-  ths.forEach(th => {
-    const handle = document.createElement('div');
-    handle.className = 'resize-handle';
-    handle.addEventListener('click', e => e.stopPropagation()); // não aciona sort
-    th.appendChild(handle);
-
-    handle.addEventListener('mousedown', e => {
-      e.preventDefault();
-      const startX     = e.clientX;
-      const startWidth = th.getBoundingClientRect().width;
-
-      document.body.classList.add('col-resizing');
-
-      const onMove = e => {
-        const nova = Math.max(48, startWidth + (e.clientX - startX));
-        th.style.width    = nova + 'px';
-        th.style.minWidth = nova + 'px';
-      };
-
-      const onUp = () => {
-        document.body.classList.remove('col-resizing');
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup',   onUp);
-      };
-
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup',   onUp);
-    });
-  });
-}
 
 
 /* ============================================================
