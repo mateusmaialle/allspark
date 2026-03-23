@@ -17,6 +17,7 @@
    ============================================================ */
 let dadosBrutos  = [];
 let filtrosAtivos = { busca: '', nicho: '', fonte: '' };
+let ordenacao = { coluna: null, direcao: 'asc' }; // coluna: 'valorGasto' | 'cpa'
 
 
 /* ============================================================
@@ -252,6 +253,8 @@ function renderizarOfertas(lista) {
     return;
   }
 
+  const listaSorted = ordenarLista(lista);
+
   const tabela = document.createElement('div');
   tabela.className = 'table-wrap';
   tabela.innerHTML = `
@@ -260,26 +263,88 @@ function renderizarOfertas(lista) {
         <tr>
           <th>Oferta</th>
           <th>Nicho</th>
-          <th class="num">Valor Gasto (7d)</th>
-          <th class="num">CPA</th>
+          <th class="num sortable ${ordenacao.coluna === 'valorGasto' ? 'sorted' : ''}" data-col="valorGasto">
+            Valor Gasto (7d) ${setSortIcon('valorGasto')}
+          </th>
+          <th class="num sortable ${ordenacao.coluna === 'cpa' ? 'sorted' : ''}" data-col="cpa">
+            CPA (custo por aquisição) ${setSortIcon('cpa')}
+          </th>
           <th>Fonte</th>
-          <th>Referência VSL</th>
+          <th>VSL</th>
         </tr>
       </thead>
       <tbody>
-        ${lista.map(o => `
+        ${listaSorted.map(o => `
           <tr>
             <td class="td-nome">${esc(o.nome)}</td>
             <td>${o.nicho ? `<span class="nicho-badge">${esc(o.nicho)}</span>` : '—'}</td>
             <td class="num td-valor">${fmtValor(o.valorGasto)}</td>
             <td class="num td-cpa">${fmtValor(o.cpa)}</td>
             <td>${o.fonte ? `<span class="fonte-tag">${esc(o.fonte)}</span>` : '—'}</td>
-            <td class="td-vsl" title="${esc(o.linkVsl)}">${esc(o.linkVsl) || '—'}</td>
+            <td class="td-vsl">${htmlLinkVsl(o.linkVsl)}</td>
           </tr>`).join('')}
       </tbody>
     </table>`;
 
+  // Listeners de ordenação nos cabeçalhos clicáveis
+  tabela.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (ordenacao.coluna === col) {
+        ordenacao.direcao = ordenacao.direcao === 'asc' ? 'desc' : 'asc';
+      } else {
+        ordenacao.coluna  = col;
+        ordenacao.direcao = 'desc'; // padrão: maior primeiro
+      }
+      aplicarFiltros();
+    });
+  });
+
   container.appendChild(tabela);
+}
+
+/** Retorna ícone SVG de ordenação conforme o estado atual */
+function setSortIcon(col) {
+  if (ordenacao.coluna !== col) {
+    return `<svg class="sort-icon idle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M8 9l4-4 4 4M16 15l-4 4-4-4"/>
+    </svg>`;
+  }
+  return ordenacao.direcao === 'desc'
+    ? `<svg class="sort-icon active" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 9l-7 7-7-7"/>
+       </svg>`
+    : `<svg class="sort-icon active" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 15l7-7 7 7"/>
+       </svg>`;
+}
+
+/** Ordena a lista pelo estado atual de ordenacao */
+function ordenarLista(lista) {
+  if (!ordenacao.coluna) return lista;
+  return [...lista].sort((a, b) => {
+    const va = parsearValor(a[ordenacao.coluna]);
+    const vb = parsearValor(b[ordenacao.coluna]);
+    return ordenacao.direcao === 'asc' ? va - vb : vb - va;
+  });
+}
+
+/**
+ * Renderiza a célula VSL:
+ * - Se o valor for uma URL (http/https) → link clicável
+ * - Caso contrário → texto simples
+ */
+function htmlLinkVsl(valor) {
+  if (!valor) return '—';
+  try {
+    const url = new URL(valor);
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return `<a href="${esc(valor)}" target="_blank" rel="noopener noreferrer" class="vsl-link" title="${esc(valor)}">
+        Abrir VSL ↗
+      </a>`;
+    }
+  } catch { /* não é URL */ }
+  return `<span class="td-vsl-text" title="${esc(valor)}">${esc(valor)}</span>`;
 }
 
 
@@ -327,5 +392,15 @@ function esc(str) {
 
 function fmtValor(v) {
   return (v && v.trim()) ? esc(v) : '—';
+}
+
+/**
+ * Converte string de valor monetário em número para ordenação.
+ * Suporta formatos: "$54.855,00", "R$ 1.234,56", "163,88"
+ */
+function parsearValor(str) {
+  if (!str || str === '—') return -Infinity;
+  const limpo = str.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+  return parseFloat(limpo) || 0;
 }
 

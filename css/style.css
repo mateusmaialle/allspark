@@ -304,14 +304,54 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
 .td-cpa { color: var(--purple); }
 
 .td-vsl {
+  max-width: 240px;
+}
+
+.td-vsl-text {
   font-size: 12px;
   color: var(--gray-500);
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-  max-width: 280px;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Link clicável na coluna VSL */
+.vsl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--purple);
+  text-decoration: none;
+  transition: color var(--t);
+}
+
+.vsl-link:hover { color: var(--purple-hover); text-decoration: underline; }
+
+/* Cabeçalhos ordenáveis */
+.offers-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.offers-table th.sortable:hover { color: var(--purple); }
+.offers-table th.sorted { color: var(--purple); }
+
+/* Ícones de ordenação */
+.sort-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-left: 4px;
+  display: inline-block;
+}
+
+.sort-icon.idle { color: var(--gray-300, #D1D5DB); }
+.sort-icon.active { color: var(--purple); }
 
 /* Alinhamento numérico */
 .num { text-align: right; }
