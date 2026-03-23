@@ -328,3 +328,4 @@ function esc(str) {
 function fmtValor(v) {
   return (v && v.trim()) ? esc(v) : '—';
 }
+
