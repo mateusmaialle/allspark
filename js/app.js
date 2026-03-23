@@ -1,23 +1,16 @@
 /* ============================================================
    app.js — Catálogo de Ofertas XMX
    Depende de: js/config.js (carregado antes no index.html)
-
-   Estrutura atual da planilha (colunas A–F):
-     A: Oferta (nome)
-     B: Nicho
-     C: Valor Gasto (7d)
-     D: CPA
-     E: Fonte
-     F: Link VSL
    ============================================================ */
 
 
 /* ============================================================
    ESTADO GLOBAL
    ============================================================ */
-let dadosBrutos  = [];
-let filtrosAtivos = { busca: '', nicho: '', fonte: '' };
-let ordenacao = { coluna: null, direcao: 'asc' }; // coluna: 'valorGasto' | 'cpa'
+let dadosBrutos      = [];   // linhas mapeadas por field name
+let dadosColunasOrdem = [];  // [{field, label, type, idx}] na ordem da planilha
+let filtrosAtivos    = { busca: '', nicho: '', fonte: '' };
+let ordenacao        = { coluna: null, direcao: 'asc' };
 
 
 /* ============================================================
@@ -30,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     mostrarTelaSenha();
   }
-
   configurarFormSenha();
   configurarFiltros();
   configurarBotaoSair();
@@ -40,12 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ============================================================
    AUTENTICAÇÃO
-   Usa SHA-256 nativo do browser (Web Crypto API).
-   Para migrar para login individual: substituir a comparação
-   de hash por uma chamada a uma API de auth — o fluxo
-   (salvarSessao → mostrarConteudo → carregarDados) permanece igual.
    ============================================================ */
-
 function estaAutenticado() {
   try {
     const s = JSON.parse(localStorage.getItem(CONFIG.AUTH_STORAGE_KEY));
@@ -57,8 +44,7 @@ function estaAutenticado() {
 
 function salvarSessao() {
   localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify({
-    ok: true,
-    expiry: Date.now() + CONFIG.AUTH_DURATION_MS,
+    ok: true, expiry: Date.now() + CONFIG.AUTH_DURATION_MS,
   }));
 }
 
@@ -95,7 +81,6 @@ function configurarFormSenha() {
     e.preventDefault();
     const senha = input.value;
     if (!senha) return;
-
     btn.disabled = true;
     btn.textContent = 'Verificando...';
     erro.classList.add('hidden');
@@ -119,50 +104,60 @@ function configurarBotaoSair() {
 }
 
 function configurarBotaoRefresh() {
-  const btn = document.getElementById('refresh-btn');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    ordenacao = { coluna: null, direcao: 'asc' }; // reseta ordenação
+  document.getElementById('refresh-btn')?.addEventListener('click', () => {
+    ordenacao = { coluna: null, direcao: 'asc' };
     carregarDados();
   });
 }
 
 
 /* ============================================================
-   BUSCA DE DADOS — Google Sheets via endpoint gviz público
-   Não requer API Key. A planilha precisa estar compartilhada
-   como "Qualquer pessoa com o link pode visualizar".
+   BUSCA DE DADOS
    ============================================================ */
-
 async function carregarDados() {
   mostrarSkeletons();
-
   const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&gid=${CONFIG.SHEET_GID}`;
-
   try {
     const res   = await fetch(url);
     const texto = await res.text();
+    const { dados, colunasOrdem } = parsearGviz(texto);
 
-    dadosBrutos = parsearGviz(texto);
+    dadosBrutos       = dados;
+    dadosColunasOrdem = colunasOrdem;
+
     popularDropdownsFiltros(dadosBrutos);
     renderizarOfertas(dadosBrutos);
     atualizarContagem(dadosBrutos.length);
-
   } catch (err) {
     console.error('[Catálogo] Erro:', err);
     mostrarErroCarregamento();
   }
 }
 
-/**
- * Interpreta a resposta JSONP do endpoint gviz do Google Sheets.
- *
- * Mapeamento DINÂMICO por nome de cabeçalho — funciona mesmo se o usuário
- * adicionar, remover ou reordenar colunas na planilha.
- *
- * Para cada campo são aceitos múltiplos nomes possíveis (case-insensitive,
- * sem acentos), então renomear a coluna na planilha não quebra o site.
- */
+
+/* ============================================================
+   PARSER GVIZ — mapeamento dinâmico por nome de cabeçalho
+   ============================================================ */
+
+// Nomes aceitos para cada campo (case-insensitive, sem acentos)
+const LABEL_MAP = {
+  nome:            ['oferta', 'nome da oferta', 'nome', 'offer', 'produto'],
+  nicho:           ['nicho', 'niche', 'categoria'],
+  valorGasto:      ['valor gasto (7d)', 'valor gasto', 'valor investido (7d)', 'valor investido', 'investido', 'gasto'],
+  cpa:             ['cpa', 'custo por aquisicao', 'custo por aquisição'],
+  fonte:           ['fonte', 'fonte de trafego', 'fonte de tráfego', 'canal', 'trafego'],
+  linkVsl:         ['link vsl', 'vsl', 'link', 'url', 'link da pasta'],
+  versao:          ['versao', 'versão', 'version', 'ver'],
+  dataAtualizacao: ['data de atualizacao', 'data de atualização', 'data', 'atualizado em', 'atualização'],
+};
+
+// Índice invertido: label normalizado → field name
+const NORM_TO_FIELD = {};
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+Object.entries(LABEL_MAP).forEach(([field, labels]) => {
+  labels.forEach(l => { NORM_TO_FIELD[norm(l)] = field; });
+});
+
 function parsearGviz(texto) {
   const match = texto.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)\s*;?\s*$/);
   if (!match) throw new Error('Formato inesperado do Google Sheets');
@@ -171,61 +166,49 @@ function parsearGviz(texto) {
   if (data.status === 'error') throw new Error(data.errors?.[0]?.detailed_message || 'Erro na planilha');
 
   const { cols, rows } = data.table;
-  if (!rows?.length) return [];
+  if (!rows?.length) return { dados: [], colunasOrdem: [] };
 
-  // Normaliza string para comparação: minúsculas sem acentos
-  const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // Mapeia cada coluna (com label) ao seu field e mantém a ordem da planilha
+  const colunasOrdem = cols
+    .map((col, idx) => ({
+      idx,
+      label: col.label,
+      type:  col.type,
+      field: NORM_TO_FIELD[norm(col.label)] ?? null,
+    }))
+    .filter(c => c.label.trim()); // ignora colunas sem cabeçalho
 
-  // Encontra o índice de uma coluna buscando pelos nomes aceitos
-  const idx = (...nomes) => {
-    for (const nome of nomes) {
-      const i = cols.findIndex(c => norm(c.label) === norm(nome));
-      if (i !== -1) return i;
-    }
-    return -1;
-  };
+  // Índice por field para extração rápida
+  const I = {};
+  colunasOrdem.forEach(c => { if (c.field && !(c.field in I)) I[c.field] = c.idx; });
 
-  // Mapa de campos → nomes aceitos na planilha
-  const I = {
-    nome:             idx('oferta', 'nome da oferta', 'nome', 'offer'),
-    nicho:            idx('nicho', 'niche', 'categoria'),
-    valorGasto:       idx('valor gasto (7d)', 'valor gasto', 'valor investido (7d)', 'valor investido', 'investido', 'gasto'),
-    cpa:              idx('cpa', 'custo por aquisicao', 'custo por aquisição'),
-    fonte:            idx('fonte', 'fonte de trafego', 'fonte de tráfego', 'canal', 'trafego'),
-    linkVsl:          idx('link vsl', 'vsl', 'link', 'url', 'link da pasta'),
-    versao:           idx('versao', 'versão', 'version', 'ver'),
-    dataAtualizacao:  idx('data de atualizacao', 'data de atualização', 'data', 'atualizado em', 'atualização'),
-  };
-
-  // Extrai valor de uma célula: prefere .f (formatado), depois .v (raw)
   const cel = (row, i) => {
-    if (i === -1) return '';
+    if (i == null) return '';
     const c = row.c?.[i];
     if (!c) return '';
-    if (c.f != null) return String(c.f);
-    if (c.v != null) return String(c.v);
-    return '';
+    return (c.f != null ? String(c.f) : c.v != null ? String(c.v) : '').trim();
   };
 
-  return rows
+  const dados = rows
     .map(row => ({
-      nome:            cel(row, I.nome).trim(),
-      nicho:           cel(row, I.nicho).trim(),
-      valorGasto:      cel(row, I.valorGasto).trim(),
-      cpa:             cel(row, I.cpa).trim(),
-      fonte:           cel(row, I.fonte).trim(),
-      linkVsl:         cel(row, I.linkVsl).trim(),
-      versao:          cel(row, I.versao).trim(),
-      dataAtualizacao: cel(row, I.dataAtualizacao).trim(),
+      nome:            cel(row, I.nome),
+      nicho:           cel(row, I.nicho),
+      valorGasto:      cel(row, I.valorGasto),
+      cpa:             cel(row, I.cpa),
+      fonte:           cel(row, I.fonte),
+      linkVsl:         cel(row, I.linkVsl),
+      versao:          cel(row, I.versao),
+      dataAtualizacao: cel(row, I.dataAtualizacao),
     }))
-    .filter(r => r.nome); // Remove linhas vazias
+    .filter(r => r.nome);
+
+  return { dados, colunasOrdem };
 }
 
 
 /* ============================================================
    FILTROS
    ============================================================ */
-
 function popularDropdownsFiltros(dados) {
   const nichos  = [...new Set(dados.map(d => d.nicho).filter(Boolean))].sort();
   const fontes  = [...new Set(dados.map(d => d.fonte).filter(Boolean))].sort();
@@ -259,22 +242,19 @@ function configurarFiltros() {
 
 function aplicarFiltros() {
   const { busca, nicho, fonte } = filtrosAtivos;
-
   const resultado = dadosBrutos.filter(o =>
     (!busca  || o.nome.toLowerCase().includes(busca)) &&
     (!nicho  || o.nicho === nicho) &&
     (!fonte  || o.fonte === fonte)
   );
-
   renderizarOfertas(resultado);
   atualizarContagem(resultado.length);
 }
 
 
 /* ============================================================
-   RENDERIZAÇÃO — Tabela
+   RENDERIZAÇÃO — tabela dinâmica na ordem da planilha
    ============================================================ */
-
 function renderizarOfertas(lista) {
   const container = document.getElementById('offers-container');
   container.innerHTML = '';
@@ -290,76 +270,87 @@ function renderizarOfertas(lista) {
 
   const listaSorted = ordenarLista(lista);
 
-  const tabela = document.createElement('div');
-  tabela.className = 'table-wrap';
-  tabela.innerHTML = `
+  // Cabeçalhos na ordem das colunas da planilha
+  const headers = dadosColunasOrdem.map(col => {
+    const isNumeric = col.type === 'number' && col.field;
+    const isSorted  = ordenacao.coluna === col.field;
+    if (isNumeric) {
+      return `<th class="num sortable ${isSorted ? 'sorted' : ''}" data-col="${col.field}">
+        ${esc(col.label)} ${setSortIcon(col.field)}
+      </th>`;
+    }
+    return `<th>${esc(col.label)}</th>`;
+  }).join('');
+
+  // Linhas de dados
+  const bodyRows = listaSorted.map(o => {
+    const cells = dadosColunasOrdem.map(col => {
+      return `<td class="${classesCelula(col)}">${renderCelula(col, o)}</td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrap';
+  wrap.innerHTML = `
     <table class="offers-table">
-      <thead>
-        <tr>
-          <th>Oferta</th>
-          <th>Versão</th>
-          <th>Nicho</th>
-          <th class="num sortable ${ordenacao.coluna === 'valorGasto' ? 'sorted' : ''}" data-col="valorGasto">
-            Valor Gasto (7d) ${setSortIcon('valorGasto')}
-          </th>
-          <th class="num sortable ${ordenacao.coluna === 'cpa' ? 'sorted' : ''}" data-col="cpa">
-            CPA (custo por aquisição) ${setSortIcon('cpa')}
-          </th>
-          <th>Fonte</th>
-          <th>VSL</th>
-          <th>Atualizado em</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${listaSorted.map(o => `
-          <tr>
-            <td class="td-nome">${esc(o.nome)}</td>
-            <td class="td-versao">${fmtValor(o.versao)}</td>
-            <td>${o.nicho ? `<span class="nicho-badge">${esc(o.nicho)}</span>` : '—'}</td>
-            <td class="num td-valor">${fmtValor(o.valorGasto)}</td>
-            <td class="num td-cpa">${fmtValor(o.cpa)}</td>
-            <td>${o.fonte ? `<span class="fonte-tag">${esc(o.fonte)}</span>` : '—'}</td>
-            <td class="td-vsl">${htmlLinkVsl(o.linkVsl)}</td>
-            <td class="td-data">${fmtValor(o.dataAtualizacao)}</td>
-          </tr>`).join('')}
-      </tbody>
+      <thead><tr>${headers}</tr></thead>
+      <tbody>${bodyRows}</tbody>
     </table>`;
 
-  // Listeners de ordenação nos cabeçalhos clicáveis
-  tabela.querySelectorAll('th.sortable').forEach(th => {
+  // Ordenação: clique no cabeçalho
+  wrap.querySelectorAll('th.sortable').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
-      if (ordenacao.coluna === col) {
-        ordenacao.direcao = ordenacao.direcao === 'asc' ? 'desc' : 'asc';
-      } else {
-        ordenacao.coluna  = col;
-        ordenacao.direcao = 'desc';
-      }
+      ordenacao.coluna  = ordenacao.coluna === col && ordenacao.direcao === 'desc' ? col : col;
+      ordenacao.direcao = ordenacao.coluna === col && ordenacao.direcao === 'desc' ? 'asc' : 'desc';
+      ordenacao.coluna  = col;
       aplicarFiltros();
     });
   });
 
-  container.appendChild(tabela);
-  configurarRedimensionamento(tabela);
+  container.appendChild(wrap);
+
+  // Resize: aguarda o browser pintar antes de capturar as larguras
+  requestAnimationFrame(() => configurarRedimensionamento(wrap));
 }
 
-/** Retorna ícone SVG de ordenação conforme o estado atual */
-function setSortIcon(col) {
-  if (ordenacao.coluna !== col) {
+/** Retorna as classes CSS adequadas para cada célula */
+function classesCelula(col) {
+  const classes = [];
+  if (col.type === 'number') classes.push('num');
+  if (col.field === 'nome')            classes.push('td-nome');
+  if (col.field === 'cpa')             classes.push('td-cpa');
+  if (col.field === 'valorGasto')      classes.push('td-valor');
+  if (col.field === 'versao')          classes.push('td-versao');
+  if (col.field === 'dataAtualizacao') classes.push('td-data');
+  if (col.field === 'linkVsl')         classes.push('td-vsl');
+  return classes.join(' ');
+}
+
+/** Renderiza o conteúdo de uma célula com formatação especial por campo */
+function renderCelula(col, oferta) {
+  const val = col.field ? (oferta[col.field] ?? '') : '';
+  if (!val) return '—';
+  if (col.field === 'nicho')   return `<span class="nicho-badge">${esc(val)}</span>`;
+  if (col.field === 'fonte')   return `<span class="fonte-tag">${esc(val)}</span>`;
+  if (col.field === 'linkVsl') return htmlLinkVsl(val);
+  return esc(val);
+}
+
+/** Ícone SVG de ordenação */
+function setSortIcon(field) {
+  if (ordenacao.coluna !== field) {
     return `<svg class="sort-icon idle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M8 9l4-4 4 4M16 15l-4 4-4-4"/>
     </svg>`;
   }
   return ordenacao.direcao === 'desc'
-    ? `<svg class="sort-icon active" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 9l-7 7-7-7"/>
-       </svg>`
-    : `<svg class="sort-icon active" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M5 15l7-7 7 7"/>
-       </svg>`;
+    ? `<svg class="sort-icon active" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>`
+    : `<svg class="sort-icon active" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg>`;
 }
 
-/** Ordena a lista pelo estado atual de ordenacao */
+/** Ordena a lista pelo campo e direção ativos */
 function ordenarLista(lista) {
   if (!ordenacao.coluna) return lista;
   return [...lista].sort((a, b) => {
@@ -369,19 +360,13 @@ function ordenarLista(lista) {
   });
 }
 
-/**
- * Renderiza a célula VSL:
- * - Se o valor for uma URL (http/https) → link clicável
- * - Caso contrário → texto simples
- */
+/** Renderiza VSL como link clicável se for URL, senão texto */
 function htmlLinkVsl(valor) {
   if (!valor) return '—';
   try {
     const url = new URL(valor);
     if (url.protocol === 'http:' || url.protocol === 'https:') {
-      return `<a href="${esc(valor)}" target="_blank" rel="noopener noreferrer" class="vsl-link" title="${esc(valor)}">
-        Abrir VSL ↗
-      </a>`;
+      return `<a href="${esc(valor)}" target="_blank" rel="noopener noreferrer" class="vsl-link">Abrir VSL ↗</a>`;
     }
   } catch { /* não é URL */ }
   return `<span class="td-vsl-text" title="${esc(valor)}">${esc(valor)}</span>`;
@@ -389,41 +374,40 @@ function htmlLinkVsl(valor) {
 
 
 /* ============================================================
-   REDIMENSIONAMENTO DE COLUNAS
+   REDIMENSIONAMENTO DE COLUNAS (drag na borda do cabeçalho)
    ============================================================ */
+function configurarRedimensionamento(wrap) {
+  const table = wrap.querySelector('table');
+  const ths   = Array.from(wrap.querySelectorAll('th'));
 
-/**
- * Adiciona handles de drag nas bordas direitas de cada <th>.
- * O usuário arrasta para ajustar a largura de cada coluna.
- */
-function configurarRedimensionamento(tabela) {
-  const table = tabela.querySelector('table');
-  const ths   = tabela.querySelectorAll('th');
-
+  // 1. Pina as larguras atuais (já renderizadas pelo browser)
   ths.forEach(th => {
-    // Define a largura inicial explícita baseada no tamanho atual renderizado
-    th.style.width    = th.offsetWidth + 'px';
-    th.style.minWidth = '40px';
+    th.style.width    = th.getBoundingClientRect().width + 'px';
+    th.style.minWidth = '48px';
+  });
 
+  // 2. Muda para layout fixo — agora os th.style.width são respeitados
+  table.style.tableLayout = 'fixed';
+  table.style.width       = table.getBoundingClientRect().width + 'px';
+
+  // 3. Adiciona handle em cada cabeçalho
+  ths.forEach(th => {
     const handle = document.createElement('div');
     handle.className = 'resize-handle';
-    // Impede que o clique no handle dispare a ordenação
-    handle.addEventListener('click', e => e.stopPropagation());
+    handle.addEventListener('click', e => e.stopPropagation()); // não aciona sort
     th.appendChild(handle);
 
-    handle.addEventListener('mousedown', (e) => {
+    handle.addEventListener('mousedown', e => {
       e.preventDefault();
+      const startX     = e.clientX;
+      const startWidth = th.getBoundingClientRect().width;
 
-      const startX     = e.pageX;
-      const startWidth = th.offsetWidth;
-
-      // Cursor global durante o arrasto
       document.body.classList.add('col-resizing');
 
-      const onMove = (e) => {
-        const novaLargura = Math.max(60, startWidth + (e.pageX - startX));
-        th.style.width    = novaLargura + 'px';
-        th.style.minWidth = novaLargura + 'px';
+      const onMove = e => {
+        const nova = Math.max(48, startWidth + (e.clientX - startX));
+        th.style.width    = nova + 'px';
+        th.style.minWidth = nova + 'px';
       };
 
       const onUp = () => {
@@ -442,7 +426,6 @@ function configurarRedimensionamento(tabela) {
 /* ============================================================
    ESTADOS DE UI
    ============================================================ */
-
 function mostrarSkeletons() {
   document.getElementById('offers-container').innerHTML = Array(6).fill(`
     <div class="skeleton-card" aria-hidden="true">
@@ -474,24 +457,13 @@ function atualizarContagem(total) {
 /* ============================================================
    UTILITÁRIOS
    ============================================================ */
-
 function esc(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function fmtValor(v) {
-  return (v && v.trim()) ? esc(v) : '—';
-}
-
-/**
- * Converte string de valor monetário em número para ordenação.
- * Suporta formatos: "$54.855,00", "R$ 1.234,56", "163,88"
- */
 function parsearValor(str) {
   if (!str || str === '—') return -Infinity;
-  const limpo = str.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
-  return parseFloat(limpo) || 0;
+  return parseFloat(str.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
 }
-
