@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   configurarFormSenha();
   configurarFiltros();
   configurarBotaoSair();
+  configurarBotaoRefresh();
 });
 
 
@@ -117,6 +118,15 @@ function configurarBotaoSair() {
   document.getElementById('logout-btn')?.addEventListener('click', encerrarSessao);
 }
 
+function configurarBotaoRefresh() {
+  const btn = document.getElementById('refresh-btn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    ordenacao = { coluna: null, direcao: 'asc' }; // reseta ordenação
+    carregarDados();
+  });
+}
+
 
 /* ============================================================
    BUSCA DE DADOS — Google Sheets via endpoint gviz público
@@ -147,13 +157,11 @@ async function carregarDados() {
 /**
  * Interpreta a resposta JSONP do endpoint gviz do Google Sheets.
  *
- * Mapeamento de colunas (conforme a planilha atual):
- *   0 → nome       (Oferta)
- *   1 → nicho      (Nicho)
- *   2 → valorGasto (Valor Gasto 7d)
- *   3 → cpa        (CPA)
- *   4 → fonte      (Fonte)
- *   5 → linkVsl    (Link VSL)
+ * Mapeamento DINÂMICO por nome de cabeçalho — funciona mesmo se o usuário
+ * adicionar, remover ou reordenar colunas na planilha.
+ *
+ * Para cada campo são aceitos múltiplos nomes possíveis (case-insensitive,
+ * sem acentos), então renomear a coluna na planilha não quebra o site.
  */
 function parsearGviz(texto) {
   const match = texto.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)\s*;?\s*$/);
@@ -162,11 +170,36 @@ function parsearGviz(texto) {
   const data = JSON.parse(match[1]);
   if (data.status === 'error') throw new Error(data.errors?.[0]?.detailed_message || 'Erro na planilha');
 
-  const { rows } = data.table;
+  const { cols, rows } = data.table;
   if (!rows?.length) return [];
+
+  // Normaliza string para comparação: minúsculas sem acentos
+  const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Encontra o índice de uma coluna buscando pelos nomes aceitos
+  const idx = (...nomes) => {
+    for (const nome of nomes) {
+      const i = cols.findIndex(c => norm(c.label) === norm(nome));
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+
+  // Mapa de campos → nomes aceitos na planilha
+  const I = {
+    nome:             idx('oferta', 'nome da oferta', 'nome', 'offer'),
+    nicho:            idx('nicho', 'niche', 'categoria'),
+    valorGasto:       idx('valor gasto (7d)', 'valor gasto', 'valor investido (7d)', 'valor investido', 'investido', 'gasto'),
+    cpa:              idx('cpa', 'custo por aquisicao', 'custo por aquisição'),
+    fonte:            idx('fonte', 'fonte de trafego', 'fonte de tráfego', 'canal', 'trafego'),
+    linkVsl:          idx('link vsl', 'vsl', 'link', 'url', 'link da pasta'),
+    versao:           idx('versao', 'versão', 'version', 'ver'),
+    dataAtualizacao:  idx('data de atualizacao', 'data de atualização', 'data', 'atualizado em', 'atualização'),
+  };
 
   // Extrai valor de uma célula: prefere .f (formatado), depois .v (raw)
   const cel = (row, i) => {
+    if (i === -1) return '';
     const c = row.c?.[i];
     if (!c) return '';
     if (c.f != null) return String(c.f);
@@ -176,12 +209,14 @@ function parsearGviz(texto) {
 
   return rows
     .map(row => ({
-      nome:       cel(row, 0).trim(),
-      nicho:      cel(row, 1).trim(),
-      valorGasto: cel(row, 2).trim(),
-      cpa:        cel(row, 3).trim(),
-      fonte:      cel(row, 4).trim(),
-      linkVsl:    cel(row, 5).trim(),
+      nome:            cel(row, I.nome).trim(),
+      nicho:           cel(row, I.nicho).trim(),
+      valorGasto:      cel(row, I.valorGasto).trim(),
+      cpa:             cel(row, I.cpa).trim(),
+      fonte:           cel(row, I.fonte).trim(),
+      linkVsl:         cel(row, I.linkVsl).trim(),
+      versao:          cel(row, I.versao).trim(),
+      dataAtualizacao: cel(row, I.dataAtualizacao).trim(),
     }))
     .filter(r => r.nome); // Remove linhas vazias
 }
@@ -262,6 +297,7 @@ function renderizarOfertas(lista) {
       <thead>
         <tr>
           <th>Oferta</th>
+          <th>Versão</th>
           <th>Nicho</th>
           <th class="num sortable ${ordenacao.coluna === 'valorGasto' ? 'sorted' : ''}" data-col="valorGasto">
             Valor Gasto (7d) ${setSortIcon('valorGasto')}
@@ -271,17 +307,20 @@ function renderizarOfertas(lista) {
           </th>
           <th>Fonte</th>
           <th>VSL</th>
+          <th>Atualizado em</th>
         </tr>
       </thead>
       <tbody>
         ${listaSorted.map(o => `
           <tr>
             <td class="td-nome">${esc(o.nome)}</td>
+            <td class="td-versao">${fmtValor(o.versao)}</td>
             <td>${o.nicho ? `<span class="nicho-badge">${esc(o.nicho)}</span>` : '—'}</td>
             <td class="num td-valor">${fmtValor(o.valorGasto)}</td>
             <td class="num td-cpa">${fmtValor(o.cpa)}</td>
             <td>${o.fonte ? `<span class="fonte-tag">${esc(o.fonte)}</span>` : '—'}</td>
             <td class="td-vsl">${htmlLinkVsl(o.linkVsl)}</td>
+            <td class="td-data">${fmtValor(o.dataAtualizacao)}</td>
           </tr>`).join('')}
       </tbody>
     </table>`;

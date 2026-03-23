@@ -227,6 +227,26 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
 
 #clear-filters:hover { border-color: var(--purple); color: var(--purple); }
 
+#refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--purple);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t);
+}
+
+#refresh-btn svg { width: 14px; height: 14px; }
+#refresh-btn:hover { background: var(--purple-hover); }
+
 .results-count { font-size: 13px; color: var(--gray-500); margin-bottom: 4px; }
 
 
@@ -302,6 +322,18 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
 }
 
 .td-cpa { color: var(--purple); }
+
+.td-versao {
+  font-size: 12px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.td-data {
+  font-size: 12px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
 
 .td-vsl {
   max-width: 240px;
