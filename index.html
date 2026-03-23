@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catálogo de Ofertas</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       TELA DE SENHA
+       Mostrada antes do conteúdo principal.
+       No futuro, substituir por tela de login individual por afiliado.
+       ============================================================ -->
+  <div id="password-screen" class="password-screen">
+    <div class="password-box">
+
+      <!-- Ícone / Logo -->
+      <div class="password-logo" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25
+               2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25
+               2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0
+               01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0
+               012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118
+               10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0
+               012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118
+               20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+        </svg>
+      </div>
+
+      <h1>Catálogo de Ofertas</h1>
+      <p class="subtitle">Digite a senha para acessar o catálogo</p>
+
+      <form id="password-form" novalidate>
+        <input
+          type="password"
+          id="password-input"
+          placeholder="Senha de acesso"
+          autocomplete="current-password"
+          aria-label="Senha de acesso"
+          required
+        />
+        <button type="submit" id="password-submit">Entrar</button>
+        <p id="password-error" class="error-msg hidden" role="alert">
+          Senha incorreta. Tente novamente.
+        </p>
+      </form>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       CONTEÚDO PRINCIPAL
+       Só fica visível após autenticação.
+       ============================================================ -->
+  <div id="main-content" class="hidden">
+
+    <header>
+      <div class="container header-inner">
+        <div>
+          <h1>Catálogo de Ofertas</h1>
+          <p class="subtitle">Consulte e acesse as ofertas disponíveis para afiliados</p>
+        </div>
+        <button id="logout-btn" title="Sair" aria-label="Sair">Sair</button>
+      </div>
+    </header>
+
+    <main class="container">
+
+      <!-- Barra de Filtros -->
+      <section class="filters" aria-label="Filtros">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Buscar por nome da oferta..."
+            aria-label="Buscar por nome"
+          />
+        </div>
+
+        <select id="filter-nicho" aria-label="Filtrar por nicho">
+          <option value="">Todos os nichos</option>
+        </select>
+
+        <select id="filter-trafego" aria-label="Filtrar por fonte de tráfego">
+          <option value="">Todas as fontes</option>
+        </select>
+
+        <button id="clear-filters" aria-label="Limpar todos os filtros">Limpar</button>
+      </section>
+
+      <!-- Contador de resultados -->
+      <p id="results-count" class="results-count hidden" aria-live="polite"></p>
+
+      <!-- Área de cards — skeletons e ofertas renderizados aqui via JS -->
+      <section id="offers-container" aria-label="Lista de ofertas"></section>
+
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>Dados atualizados direto da planilha em tempo real.</p>
+      </div>
+    </footer>
+
+  </div><!-- #main-content -->
+
+
+  <!-- config.js deve ser carregado ANTES de app.js -->
+  <script src="/js/config.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
