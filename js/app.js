@@ -333,13 +333,14 @@ function renderizarOfertas(lista) {
         ordenacao.direcao = ordenacao.direcao === 'asc' ? 'desc' : 'asc';
       } else {
         ordenacao.coluna  = col;
-        ordenacao.direcao = 'desc'; // padrão: maior primeiro
+        ordenacao.direcao = 'desc';
       }
       aplicarFiltros();
     });
   });
 
   container.appendChild(tabela);
+  configurarRedimensionamento(tabela);
 }
 
 /** Retorna ícone SVG de ordenação conforme o estado atual */
@@ -384,6 +385,57 @@ function htmlLinkVsl(valor) {
     }
   } catch { /* não é URL */ }
   return `<span class="td-vsl-text" title="${esc(valor)}">${esc(valor)}</span>`;
+}
+
+
+/* ============================================================
+   REDIMENSIONAMENTO DE COLUNAS
+   ============================================================ */
+
+/**
+ * Adiciona handles de drag nas bordas direitas de cada <th>.
+ * O usuário arrasta para ajustar a largura de cada coluna.
+ */
+function configurarRedimensionamento(tabela) {
+  const table = tabela.querySelector('table');
+  const ths   = tabela.querySelectorAll('th');
+
+  ths.forEach(th => {
+    // Define a largura inicial explícita baseada no tamanho atual renderizado
+    th.style.width    = th.offsetWidth + 'px';
+    th.style.minWidth = '40px';
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    // Impede que o clique no handle dispare a ordenação
+    handle.addEventListener('click', e => e.stopPropagation());
+    th.appendChild(handle);
+
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+
+      const startX     = e.pageX;
+      const startWidth = th.offsetWidth;
+
+      // Cursor global durante o arrasto
+      document.body.classList.add('col-resizing');
+
+      const onMove = (e) => {
+        const novaLargura = Math.max(60, startWidth + (e.pageX - startX));
+        th.style.width    = novaLargura + 'px';
+        th.style.minWidth = novaLargura + 'px';
+      };
+
+      const onUp = () => {
+        document.body.classList.remove('col-resizing');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+      };
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+  });
 }
 
 
