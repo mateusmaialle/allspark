@@ -258,7 +258,9 @@ header .subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
 }
 
 .table-wrap {
-  overflow-x: auto;
+  width: fit-content;   /* encolhe até o tamanho do conteúdo */
+  max-width: 100%;      /* mas nunca ultrapassa o container */
+  overflow-x: auto;     /* scroll quando o conteúdo for maior que a tela */
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius);
   background: var(--white);
