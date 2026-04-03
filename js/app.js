@@ -413,5 +413,14 @@ function esc(str) {
 
 function parsearValor(str) {
   if (!str || str === '—') return -Infinity;
-  return parseFloat(str.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
+  let s = str.replace(/[R$\s]/g, '');
+  // Detecta formato: se o último separador for '.', é US (ex: 54,855.00); se for ',', é BR (ex: 4.200,00)
+  const lastDot   = s.lastIndexOf('.');
+  const lastComma = s.lastIndexOf(',');
+  if (lastDot > lastComma) {
+    s = s.replace(/,/g, ''); // remove separador de milhar US
+  } else {
+    s = s.replace(/\./g, '').replace(',', '.'); // formato BR
+  }
+  return parseFloat(s) || 0;
 }

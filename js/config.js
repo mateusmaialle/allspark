@@ -16,7 +16,7 @@ const CONFIG = {
 
   // ID da aba específica (o número após gid= na URL da planilha)
   // Deixe vazio ('') para usar a primeira aba
-  SHEET_GID: '95760077',
+  SHEET_GID: '972977625',
 
   // Hash SHA-256 da senha "xmxoffers"
   // Para trocar a senha, gere um novo hash e substitua abaixo
