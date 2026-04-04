@@ -147,6 +147,7 @@ const LABEL_MAP = {
   cpa:             ['cpa', 'custo por aquisicao', 'custo por aquisição'],
   fonte:           ['fonte', 'fonte de trafego', 'fonte de tráfego', 'canal', 'trafego'],
   linkVsl:         ['link vsl', 'vsl', 'link', 'url', 'link da pasta'],
+  nomeVsl:         ['nome vsl', 'nome do vsl', 'nome da vsl', 'vsl nome', 'nome do arquivo'],
   versao:          ['versao', 'versão', 'version', 'ver'],
   dataAtualizacao: ['data de atualizacao', 'data de atualização', 'data', 'atualizado em', 'atualização'],
 };
@@ -176,7 +177,7 @@ function parsearGviz(texto) {
       type:  col.type,
       field: NORM_TO_FIELD[norm(col.label)] ?? null,
     }))
-    .filter(c => c.label.trim()); // ignora colunas sem cabeçalho
+    .filter(c => c.label.trim() && c.field !== 'nomeVsl'); // ignora colunas sem cabeçalho e colunas internas
 
   // Índice por field para extração rápida
   const I = {};
@@ -197,6 +198,7 @@ function parsearGviz(texto) {
       cpa:             cel(row, I.cpa),
       fonte:           cel(row, I.fonte),
       linkVsl:         cel(row, I.linkVsl),
+      nomeVsl:         cel(row, I.nomeVsl),
       versao:          cel(row, I.versao),
       dataAtualizacao: cel(row, I.dataAtualizacao),
     }))
@@ -331,7 +333,7 @@ function renderCelula(col, oferta) {
   if (!val) return '—';
   if (col.field === 'nicho')   return `<span class="nicho-badge">${esc(val)}</span>`;
   if (col.field === 'fonte')   return `<span class="fonte-tag">${esc(val)}</span>`;
-  if (col.field === 'linkVsl') return htmlLinkVsl(val);
+  if (col.field === 'linkVsl') return htmlLinkVsl(val, oferta.nomeVsl);
   return esc(val);
 }
 
@@ -358,12 +360,13 @@ function ordenarLista(lista) {
 }
 
 /** Renderiza VSL como link clicável se for URL, senão texto */
-function htmlLinkVsl(valor) {
+function htmlLinkVsl(valor, nome) {
   if (!valor) return '—';
   try {
     const url = new URL(valor);
     if (url.protocol === 'http:' || url.protocol === 'https:') {
-      return `<a href="${esc(valor)}" target="_blank" rel="noopener noreferrer" class="vsl-link">Abrir VSL ↗</a>`;
+      const texto = nome || 'Abrir VSL ↗';
+      return `<a href="${esc(valor)}" target="_blank" rel="noopener noreferrer" class="vsl-link" title="${esc(valor)}">${esc(texto)}</a>`;
     }
   } catch { /* não é URL */ }
   return `<span class="td-vsl-text" title="${esc(valor)}">${esc(valor)}</span>`;
