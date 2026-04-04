@@ -285,10 +285,11 @@ function renderizarOfertas(lista) {
 
   // Cabeçalhos na ordem das colunas da planilha
   const headers = dadosColunasOrdem.map(col => {
-    const isNumeric = col.type === 'number' && col.field;
-    const isSorted  = ordenacao.coluna === col.field;
-    if (isNumeric) {
-      return `<th class="num sortable ${isSorted ? 'sorted' : ''}" data-col="${col.field}">
+    const isNumeric  = col.type === 'number' && col.field;
+    const isSortable = (col.type === 'number' || col.type === 'date') && col.field;
+    const isSorted   = ordenacao.coluna === col.field;
+    if (isSortable) {
+      return `<th class="${isNumeric ? 'num ' : ''}sortable ${isSorted ? 'sorted' : ''}" data-col="${col.field}">
         ${esc(col.label)} ${setSortIcon(col.field)}
       </th>`;
     }
@@ -363,11 +364,22 @@ function setSortIcon(field) {
 /** Ordena a lista pelo campo e direção ativos */
 function ordenarLista(lista) {
   if (!ordenacao.coluna) return lista;
+  const col    = dadosColunasOrdem.find(c => c.field === ordenacao.coluna);
+  const isDate = col?.type === 'date';
   return [...lista].sort((a, b) => {
-    const va = parsearValor(a[ordenacao.coluna]);
-    const vb = parsearValor(b[ordenacao.coluna]);
+    const va = isDate ? parsearData(a[ordenacao.coluna]) : parsearValor(a[ordenacao.coluna]);
+    const vb = isDate ? parsearData(b[ordenacao.coluna]) : parsearValor(b[ordenacao.coluna]);
     return ordenacao.direcao === 'asc' ? va - vb : vb - va;
   });
+}
+
+/** Converte data formatada (DD/MM ou DD/MM/YYYY) em número para comparação */
+function parsearData(str) {
+  if (!str || str === '—') return 0;
+  const p = str.trim().split('/');
+  if (p.length === 3) return parseInt(p[2]) * 10000 + parseInt(p[1]) * 100 + parseInt(p[0]);
+  if (p.length === 2) return parseInt(p[1]) * 100 + parseInt(p[0]);
+  return 0;
 }
 
 /** Renderiza VSL como link clicável se for URL, senão texto */
