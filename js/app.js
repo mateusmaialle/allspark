@@ -171,17 +171,28 @@ function parsearGviz(texto) {
 
   // Mapeia cada coluna (com label) ao seu field e mantém a ordem da planilha
   const colunasOrdem = cols
-    .map((col, idx) => ({
-      idx,
-      label: col.label,
-      type:  col.type,
-      field: NORM_TO_FIELD[norm(col.label)] ?? null,
-    }))
-    .filter(c => c.label.trim() && c.field !== 'nomeVsl'); // ignora colunas sem cabeçalho e colunas internas
+    .map((col, idx) => {
+      const field = NORM_TO_FIELD[norm(col.label)] ?? null;
+      return {
+        idx,
+        label: field === 'nomeVsl' ? 'Nome da Oferta' : col.label,
+        type:  col.type,
+        field,
+      };
+    })
+    .filter(c => c.label.trim()) // ignora colunas sem cabeçalho
+    .sort((a, b) => {            // garante que Nome da Oferta aparece primeiro
+      if (a.field === 'nomeVsl') return -1;
+      if (b.field === 'nomeVsl') return 1;
+      return 0;
+    });
 
-  // Índice por field para extração rápida
+  // Índice por field para extração rápida (inclui todas as colunas mapeadas, mesmo as não exibidas)
   const I = {};
-  colunasOrdem.forEach(c => { if (c.field && !(c.field in I)) I[c.field] = c.idx; });
+  cols.forEach((col, idx) => {
+    const field = NORM_TO_FIELD[norm(col.label)] ?? null;
+    if (field && !(field in I)) I[field] = idx;
+  });
 
   const cel = (row, i) => {
     if (i == null) return '';
@@ -333,7 +344,7 @@ function renderCelula(col, oferta) {
   if (!val) return '—';
   if (col.field === 'nicho')   return `<span class="nicho-badge">${esc(val)}</span>`;
   if (col.field === 'fonte')   return `<span class="fonte-tag">${esc(val)}</span>`;
-  if (col.field === 'linkVsl') return htmlLinkVsl(val, oferta.nomeVsl);
+  if (col.field === 'linkVsl') return htmlLinkVsl(val);
   return esc(val);
 }
 
@@ -360,13 +371,12 @@ function ordenarLista(lista) {
 }
 
 /** Renderiza VSL como link clicável se for URL, senão texto */
-function htmlLinkVsl(valor, nome) {
+function htmlLinkVsl(valor) {
   if (!valor) return '—';
   try {
     const url = new URL(valor);
     if (url.protocol === 'http:' || url.protocol === 'https:') {
-      const texto = nome || 'Abrir VSL ↗';
-      return `<a href="${esc(valor)}" target="_blank" rel="noopener noreferrer" class="vsl-link" title="${esc(valor)}">${esc(texto)}</a>`;
+      return `<a href="${esc(valor)}" target="_blank" rel="noopener noreferrer" class="vsl-link">Abrir VSL ↗</a>`;
     }
   } catch { /* não é URL */ }
   return `<span class="td-vsl-text" title="${esc(valor)}">${esc(valor)}</span>`;
