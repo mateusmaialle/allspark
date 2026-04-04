@@ -180,7 +180,7 @@ function parsearGviz(texto) {
         field,
       };
     })
-    .filter(c => c.label.trim()) // ignora colunas sem cabeçalho
+    .filter(c => c.label.trim() && c.field !== 'nome') // ignora colunas sem cabeçalho e colunas internas
     .sort((a, b) => {            // garante que Nome da Oferta aparece primeiro
       if (a.field === 'nomeVsl') return -1;
       if (b.field === 'nomeVsl') return 1;
