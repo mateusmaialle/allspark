@@ -116,7 +116,7 @@ function configurarBotaoRefresh() {
    ============================================================ */
 async function carregarDados() {
   mostrarSkeletons();
-  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&gid=${CONFIG.SHEET_GID}`;
+  const url = '/api/sheets';
   try {
     const res   = await fetch(url);
     const texto = await res.text();
