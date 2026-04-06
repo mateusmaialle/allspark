@@ -36,15 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
 function estaAutenticado() {
   try {
     const s = JSON.parse(localStorage.getItem(CONFIG.AUTH_STORAGE_KEY));
-    if (!s?.expiry) return false;
+    if (!s?.token || !s?.expiry) return false;
     if (Date.now() > s.expiry) { localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY); return false; }
     return true;
   } catch { return false; }
 }
 
-function salvarSessao() {
+function getSessao() {
+  try { return JSON.parse(localStorage.getItem(CONFIG.AUTH_STORAGE_KEY)); } catch { return null; }
+}
+
+function salvarSessao(token) {
   localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify({
-    ok: true, expiry: Date.now() + CONFIG.AUTH_DURATION_MS,
+    token, expiry: Date.now() + CONFIG.AUTH_DURATION_MS,
   }));
 }
 
@@ -55,10 +59,6 @@ function encerrarSessao() {
   mostrarTelaSenha();
 }
 
-async function hashSenha(senha) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 function mostrarTelaSenha() {
   document.getElementById('password-screen').classList.remove('hidden');
@@ -85,14 +85,26 @@ function configurarFormSenha() {
     btn.textContent = 'Verificando...';
     erro.classList.add('hidden');
 
-    if (await hashSenha(senha) === CONFIG.PASSWORD_HASH) {
-      salvarSessao();
-      mostrarConteudo();
-      carregarDados();
-    } else {
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: senha }),
+      });
+      if (res.ok) {
+        const { token } = await res.json();
+        salvarSessao(token);
+        mostrarConteudo();
+        carregarDados();
+      } else {
+        erro.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    } catch {
       erro.classList.remove('hidden');
-      input.value = '';
-      input.focus();
       btn.disabled = false;
       btn.textContent = 'Entrar';
     }
@@ -116,9 +128,12 @@ function configurarBotaoRefresh() {
    ============================================================ */
 async function carregarDados() {
   mostrarSkeletons();
-  const url = '/api/sheets';
   try {
-    const res   = await fetch(url);
+    const { token } = getSessao() || {};
+    const res = await fetch('/api/sheets', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (res.status === 401) { encerrarSessao(); return; }
     const texto = await res.text();
     const { dados, colunasOrdem } = parsearGviz(texto);
 
